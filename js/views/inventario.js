@@ -4,6 +4,7 @@
   const { h, num, fCorta, chip, barra, ETIQ_MAT, formulario, modal, cerrarModal, aviso, confirmar } = UI;
 
   const opc = () => ({ ventana: Store.s.ajustes.ventanaConsumo, diasAviso: Store.s.ajustes.diasAviso });
+  const recibido = (id) => Store.s.movimientos.filter((x) => x.matId === id && x.tipo === 'entrada').reduce((t, x) => t + Number(x.cant), 0);
   const matPorId = (id) => Store.s.materiales.find((m) => m.id === id);
   const CLASE_BARRA = { 'bajo-minimo': 'atrasada', 'por-llegar': 'atencion', suficiente: 'terminada' };
 
@@ -38,6 +39,7 @@
       { nombre: 'unidad', etiqueta: 'Unidad (pza, m³, bulto, kg…)', valor: m.unidad, requerido: true },
       { nombre: 'minimo', etiqueta: 'Mínimo', tipo: 'number', valor: m.minimo, requerido: true },
       { nombre: 'maximo', etiqueta: 'Máximo (para pedido sugerido)', tipo: 'number', valor: m.maximo },
+      { nombre: 'requerido', etiqueta: 'Total que pide la obra (opcional)', tipo: 'number', valor: m.requerido },
     ];
     if (nuevo) campos.push({ nombre: 'inicial', etiqueta: 'Existencia inicial', tipo: 'number', valor: 0 });
     formulario(nuevo ? 'Nuevo material' : 'Editar material', campos, (d) => {
@@ -76,6 +78,8 @@
         h('div', h('div.peque.tenue', 'Existencia'), h('div.kpi-grande', `${num(e.exist)} ${m.unidad}`)),
         h('div', h('div.peque.tenue', 'Estado'), chip(e.estado, ETIQ_MAT[e.estado]))),
       h('p.peque.tenue', `Mínimo ${num(m.minimo)} · Máximo ${m.maximo ? num(m.maximo) : '—'} · Entradas ${num(ents)} · Salidas ${num(sals)} · Consumo ≈ ${num(e.consumo)}/día (últimos ${st.ajustes.ventanaConsumo} días) · Alcanza ≈ ${isFinite(e.alcanza) ? e.alcanza + ' días' : 'sin consumo'}`),
+      m.requerido ? h('div.mt', h('div.peque', `Recibido ${num(ents)} de ${num(m.requerido, 0)} ${m.unidad} que pide la obra (${Math.round((ents / m.requerido) * 100)}%) · usado ${num(sals)}`),
+        barra((ents / m.requerido) * 100, (sals / m.requerido) * 100, 'adelantada')) : null,
       h('h4', 'Movimientos (kárdex)'),
       movs.length ? movs.map((x) => filaMov(x, m, false)) : h('p.tenue', 'Sin movimientos.'),
     ], [
@@ -151,7 +155,8 @@
         h('div.fila-tit', h('div', h('b', m.nombre), h('div.peque.tenue', `Mínimo ${num(m.minimo)} ${m.unidad} · consumo ≈ ${num(e.consumo)}/día`)),
           h('div.derecha', h('div.kpi-grande.' + (e.estado === 'bajo-minimo' ? 'rojo' : ''), num(e.exist)), h('div.peque.tenue', m.unidad))),
         barra(m.maximo ? (e.exist / m.maximo) * 100 : Math.min(100, (e.exist / (m.minimo * 3 || 1)) * 100), m.maximo ? (m.minimo / m.maximo) * 100 : 33.3, CLASE_BARRA[e.estado]),
-        h('div.peque', chip(e.estado, ETIQ_MAT[e.estado]), h('span.tenue', ' · alcanza para ≈ ' + (isFinite(e.alcanza) ? `${e.alcanza} día(s)` : 'sin consumo reciente'))))),
+        h('div.peque', chip(e.estado, ETIQ_MAT[e.estado]), h('span.tenue', ' · alcanza para ≈ ' + (isFinite(e.alcanza) ? `${e.alcanza} día(s)` : 'sin consumo reciente'))),
+        m.requerido ? h('div.peque.tenue', `Obra: ${num(recibido(m.id), 0)} de ${num(m.requerido, 0)} ${m.unidad} recibidos`) : null)),
       h('section.tarjeta', h('h3', 'Últimos movimientos'),
         ultimos.length ? ultimos.map((x) => filaMov(x, matPorId(x.matId), true)) : h('p.tenue', 'Aún no hay movimientos.')));
   }

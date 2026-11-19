@@ -1,6 +1,6 @@
 /* Service worker: guarda la app para abrirla sin señal en obra.
    Sube la versión de CACHE cuando publiques cambios. */
-const CACHE = 'jcc-obra-v1';
+const CACHE = 'jcc-obra-v2';
 const ARCHIVOS = [
   './', './index.html', './css/styles.css', './manifest.webmanifest', './icon.svg',
   './js/calc.js', './js/store.js', './js/ui.js', './js/fotos.js', './js/app.js',
